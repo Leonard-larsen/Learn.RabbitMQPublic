@@ -2,6 +2,10 @@ import pika
 import time
 import random
 
+
+#SSL from https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/amazon-mq-rabbitmq-pika.html
+
+
 def on_message_received(ch, method, properties, body):
     processing_time = random.randint(1, 6)
     print(f'received: "{body}", will take {processing_time} to process')
@@ -9,7 +13,19 @@ def on_message_received(ch, method, properties, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
     print(f'finished processing and acknowledged message')
 
-connection_parameters = pika.ConnectionParameters('localhost')
+
+
+
+#connection_parameters = pika.ConnectionParameters('localhost')
+
+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+ssl_context.set_ciphers('ECDHE+AESGCM:!ECDSA')
+
+
+url = f"amqps://{rabbitmq_user}:{rabbitmq_password}@{rabbitmq_broker_id}.mq.{region}.amazonaws.com:5671"
+connection_parameters = pika.URLParameters(url)
+connection_parameters.ssl_options = pika.SSLOptions(context=ssl_context)
 
 connection = pika.BlockingConnection(connection_parameters)
 
